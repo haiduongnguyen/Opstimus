@@ -18,7 +18,10 @@ class IsolationForestDetector(BaseDetector):
         if threshold is None:
             threshold = scores.mean() + 3 * scores.std()
         return scores > threshold
+<<<<<<< HEAD
 
     def save_model(self, filepath):
         import joblib
         joblib.dump(self.model, filepath)
+=======
+>>>>>>> e6d36e26a2611e5e76317d60e89ad5f63b686c42
