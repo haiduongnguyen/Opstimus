@@ -1,0 +1,14 @@
+venv_*/
+*.pyc
+__pycache__/
+/*.pyc
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+data/raw/archive.zip
+data/raw/creditcard.csv
+raw/archive.zip
+raw/creditcard.csv
