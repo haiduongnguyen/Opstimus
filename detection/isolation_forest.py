@@ -14,10 +14,11 @@ class IsolationForestDetector(BaseDetector):
         return -self.model.decision_function(X)
 
     def predict(self, X, threshold=None):
-        scores = self.score(X)
-        if threshold is None:
-            threshold = scores.mean() + 3 * scores.std()
-        return scores > threshold
+        # scores = self.score(X)
+        # if threshold is None:
+        #     threshold = scores.mean() + 3 * scores.std()
+        # return scores > threshold
+        return self.model.predict(X) == -1  # Return True for anomalies
 
     def save_model(self, filepath):
         import joblib
