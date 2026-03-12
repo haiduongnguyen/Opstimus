@@ -17,3 +17,11 @@ class BaseDetector(ABC):
     @abstractmethod
     def predict(self, X: Any, threshold: Any = None) -> np.ndarray:
         pass
+
+    @abstractmethod
+    def save_model(self, file_path: Any) -> Any:
+        pass
+
+    @abstractmethod
+    def load_model(self, file_path: Any) -> Any:
+        pass
