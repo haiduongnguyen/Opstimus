@@ -13,13 +13,13 @@ class AutoencoderDetector(BaseDetector):
     - Decoder: Phần này nhận biểu diễn nén từ encoder và cố gắng tái tạo lại dữ liệu gốc. Mục tiêu của decoder là học cách giải nén biểu diễn nén để tái tạo dữ liệu ban đầu.
     Autoencoder thường được sử dụng trong các bài toán giảm chiều dữ liệu, phát hiện bất thường (anomaly detection), và tạo dữ liệu mới (data generation). Trong bài toán phát hiện bất thường, autoencoder được huấn luyện trên dữ liệu bình thường, và sau đó sử dụng để tính toán lỗi tái tạo (reconstruction error) cho các điểm dữ liệu mới. Nếu lỗi tái tạo vượt quá một ngưỡng nhất định, điểm dữ liệu đó có thể được coi là bất thường.
     """
-    def __init__(self, input_shape):
-        self.input_shape = input_shape
+    def __init__(self, **kwargs):
+        pass
         # self.model = model
 
 
-    def build(self):
-        input_dim = self.input_shape[0]
+    def build(self, input_shape=(30,), **kwargs) -> keras.Model:
+        input_dim = input_shape[0]
 
         input_layer = layers.Input(shape=(input_dim,))
     
@@ -71,3 +71,9 @@ class AutoencoderDetector(BaseDetector):
         if self.model is None:
             raise ValueError("Model has not been trained yet.")
         self.model.save(file_path)
+
+    def load_model(self, file_path: str) -> keras.Model:
+        # We explicitly tell Pylance 'model' is a keras.Model
+        model: keras.Model = keras.models.load_model(file_path) 
+        self.model = model
+        return self.model

@@ -20,6 +20,11 @@ class IsolationForestDetector(BaseDetector):
         # return scores > threshold
         return self.model.predict(X) == -1  # Return True for anomalies
 
-    def save_model(self, filepath):
+    def save_model(self, file_path):
         import joblib
-        joblib.dump(self.model, filepath)
+        joblib.dump(self.model, file_path)
+
+    def load_model(self, file_path):
+        import joblib
+        self.model = joblib.load(file_path)
+        return self.model
