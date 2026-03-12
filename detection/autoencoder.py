@@ -72,8 +72,7 @@ class AutoencoderDetector(BaseDetector):
             raise ValueError("Model has not been trained yet.")
         self.model.save(file_path)
 
+    ## load this is not right because we need to assign the loaded model to self.model
     def load_model(self, file_path: str) -> keras.Model:
-        # We explicitly tell Pylance 'model' is a keras.Model
-        model: keras.Model = keras.models.load_model(file_path) 
-        self.model = model
+        self.model = keras.models.load_model(file_path)
         return self.model
