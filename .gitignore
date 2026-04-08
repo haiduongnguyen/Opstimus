@@ -5,6 +5,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.pkl
+*.keras
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
@@ -15,4 +17,8 @@ raw/creditcard.csv
 
 data/raw/SMD_data/
 data/raw/SMD_data.zip
+data/raw/creditcard/
+data/raw/SMD_data_use/
+models/checkpoint/
+models/checkpoint_SMD/
 artifacts/
