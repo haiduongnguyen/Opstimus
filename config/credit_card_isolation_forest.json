@@ -1,0 +1,22 @@
+{
+  "dataset": {
+    "name": "credit_card",
+    "path": "data/raw/creditcard/creditcard.csv",
+    "label_col": "Class",
+    "drop_columns": ["Time"],
+    "test_size": 0.3,
+    "random_state": 42
+  },
+  "detector": {
+    "name": "isolation_forest",
+    "params": {
+      "n_estimators": 100,
+      "contamination": 0.01,
+      "random_state": 42
+    }
+  },
+  "rca": {
+    "top_k": 5
+  },
+  "output_dir": "artifacts/credit_card/isolation_forest"
+}
