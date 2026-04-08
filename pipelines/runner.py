@@ -13,7 +13,7 @@ from detection.isolation_forest import IsolationForestDetector
 from detection.lof import LocalOutlierFactorDetector
 from evaluation import evaluate_detection, write_report
 from preprocessing.scaling import Scaler
-from rca import rank_root_causes
+from rca import analyze_root_causes
 
 
 def _load_config(config_path: str | Path) -> dict[str, Any]:
@@ -39,6 +39,7 @@ def _build_dataset(config: dict[str, Any]):
             train_path=dataset_config["train_path"],
             test_path=dataset_config["test_path"],
             label_path=dataset_config["label_path"],
+            interpretation_label_path=dataset_config.get("interpretation_label_path"),
         )
 
     raise ValueError(f"Unsupported dataset: {dataset_name}")
@@ -88,14 +89,18 @@ def run_pipeline(config_path: str | Path) -> dict[str, Any]:
             scores=scores,
         )
 
-    feature_ranking = rank_root_causes(
+    rca_analysis = analyze_root_causes(
         train_features=dataset.train_features,
         test_features=dataset.test_features,
         anomaly_mask=predictions,
         top_k=config.get("rca", {}).get("top_k", 5),
+        interpretation_label_path=dataset.metadata.get("interpretation_label_path"),
     )
 
-    summary["rca"] = feature_ranking.to_dict(orient="records")
+    summary["rca"] = {
+        "global_ranking": rca_analysis["global_ranking"].to_dict(orient="records"),
+        "metrics": rca_analysis["rca_metrics"],
+    }
 
     output_dir = Path(config.get("output_dir", "artifacts/default_run"))
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -118,7 +123,11 @@ def run_pipeline(config_path: str | Path) -> dict[str, Any]:
         predictions_frame["label"] = dataset.test_labels.to_numpy()
 
     predictions_frame.to_csv(output_dir / "predictions.csv", index=False)
-    feature_ranking.to_csv(output_dir / "root_causes.csv", index=False)
+    rca_analysis["global_ranking"].to_csv(output_dir / "root_causes.csv", index=False)
+    if not rca_analysis["segment_rankings"].empty:
+        rca_analysis["segment_rankings"].to_csv(output_dir / "root_cause_segments.csv", index=False)
+    if rca_analysis["event_matches"]:
+        pd.DataFrame(rca_analysis["event_matches"]).to_csv(output_dir / "root_cause_event_matches.csv", index=False)
     write_report(output_dir, summary, predictions_frame)
 
     return summary

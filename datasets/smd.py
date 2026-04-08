@@ -13,11 +13,13 @@ class SMDDataset(BaseDataset):
         train_path: str | Path,
         test_path: str | Path,
         label_path: str | Path,
+        interpretation_label_path: str | Path | None = None,
     ) -> None:
         super().__init__(name="smd", root=Path(train_path).parent)
         self.train_path = Path(train_path)
         self.test_path = Path(test_path)
         self.label_path = Path(label_path)
+        self.interpretation_label_path = Path(interpretation_label_path) if interpretation_label_path else None
 
     def load(self) -> DatasetBundle:
         train_features = pd.read_csv(self.train_path, header=None)
@@ -37,6 +39,7 @@ class SMDDataset(BaseDataset):
                 "train_path": str(self.train_path),
                 "test_path": str(self.test_path),
                 "label_path": str(self.label_path),
+                "interpretation_label_path": str(self.interpretation_label_path) if self.interpretation_label_path else None,
                 "num_channels": train_features.shape[1],
                 "num_train_rows": len(train_features),
                 "num_test_rows": len(test_features),
