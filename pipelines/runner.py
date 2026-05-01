@@ -14,6 +14,7 @@ from detection.lof import LocalOutlierFactorDetector
 from evaluation import evaluate_detection, write_report
 from preprocessing.scaling import Scaler
 from rca import analyze_root_causes
+from thresholding import apply_threshold_strategy
 
 
 def _build_detector(config: dict[str, Any]):
@@ -43,8 +44,16 @@ def run_pipeline(config_path: str | Path) -> dict[str, Any]:
     test_array = scaler.transform(dataset.test_features)
 
     detector.fit(train_array)
-    scores = detector.score(test_array)
-    predictions = detector.predict(test_array)
+    raw_scores = detector.score(test_array)
+    threshold_result = apply_threshold_strategy(
+        detector_name=config["detector"]["name"],
+        detector=detector,
+        X_test=test_array,
+        scores=raw_scores,
+        threshold_config=config["threshold"],
+    )
+    scores = threshold_result["scores"]
+    predictions = threshold_result["predictions"]
 
     summary: dict[str, Any] = {
         "experiment": config["experiment"],
@@ -57,6 +66,7 @@ def run_pipeline(config_path: str | Path) -> dict[str, Any]:
         "preprocessing": config["preprocessing"],
         "threshold": config["threshold"],
     }
+    summary["threshold"]["resolved_value"] = threshold_result["threshold_value"]
 
     if dataset.test_labels is not None:
         summary["metrics"] = evaluate_detection(

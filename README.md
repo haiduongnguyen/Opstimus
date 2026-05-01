@@ -45,6 +45,24 @@ The pipeline will:
 6. Rank likely root-cause features for detected anomalies.
 7. Save outputs to `artifacts/...`.
 
+## Threshold Strategies
+
+The pipeline supports threshold selection through config:
+
+- `model_default`: use detector-native prediction
+- `percentile`: mark points above a chosen anomaly score percentile
+- `stddev`: threshold at `mean + std_factor * std`
+- `value`: use a fixed anomaly score cutoff
+
+Example:
+
+```json
+"threshold": {
+  "strategy": "percentile",
+  "percentile": 95
+}
+```
+
 ## Run The Demo Dashboard
 
 After generating artifacts, launch the local dashboard:
