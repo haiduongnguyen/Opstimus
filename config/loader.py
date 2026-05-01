@@ -7,6 +7,11 @@ from typing import Any
 
 
 DEFAULT_PIPELINE_CONFIG: dict[str, Any] = {
+    "experiment": {
+        "name": "",
+        "task_type": "anomaly_detection_rca",
+        "tags": [],
+    },
     "dataset": {},
     "preprocessing": {
         "scaler": "standard",
@@ -42,10 +47,13 @@ def load_pipeline_config(config_path: str | Path) -> dict[str, Any]:
 
     config = _deep_merge(DEFAULT_PIPELINE_CONFIG, raw_config)
     config["config_path"] = str(path)
+    config["config_id"] = path.with_suffix("").as_posix()
 
     if not config["dataset"].get("name"):
         raise ValueError("Config must define dataset.name")
     if not config["detector"].get("name"):
         raise ValueError("Config must define detector.name")
+    if not config["experiment"].get("name"):
+        config["experiment"]["name"] = path.stem
 
     return config

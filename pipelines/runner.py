@@ -47,6 +47,7 @@ def run_pipeline(config_path: str | Path) -> dict[str, Any]:
     predictions = detector.predict(test_array)
 
     summary: dict[str, Any] = {
+        "experiment": config["experiment"],
         "dataset": {
             "name": dataset.name,
             "dataset_type": dataset_definition["dataset_type"],

@@ -1,4 +1,9 @@
 {
+  "experiment": {
+    "name": "smd_machine_1_1_isolation_forest",
+    "task_type": "time_series_ad_rca",
+    "tags": ["smd", "machine_1_1", "baseline", "time_series", "isolation_forest"]
+  },
   "dataset": {
     "name": "smd",
     "train_path": "data/raw/SMD_data/ServerMachineDataset/train/machine-1-1.txt",

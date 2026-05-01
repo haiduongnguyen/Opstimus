@@ -19,6 +19,7 @@ def discover_config_paths(config_root: str | Path) -> list[Path]:
 
 
 def _extract_leaderboard_row(config_path: Path, summary: dict[str, Any], status: str, error: str | None = None) -> dict[str, Any]:
+    experiment = summary.get("experiment", {})
     dataset = summary.get("dataset", {})
     detector = summary.get("detector", {})
     metrics = summary.get("metrics", {})
@@ -28,6 +29,9 @@ def _extract_leaderboard_row(config_path: Path, summary: dict[str, Any], status:
     return {
         "config_path": str(config_path),
         "status": status,
+        "experiment_name": experiment.get("name"),
+        "task_type": experiment.get("task_type"),
+        "tags": ",".join(experiment.get("tags", [])) if isinstance(experiment.get("tags"), list) else experiment.get("tags"),
         "dataset_name": dataset.get("name"),
         "dataset_type": dataset.get("dataset_type"),
         "detector_name": detector.get("name"),

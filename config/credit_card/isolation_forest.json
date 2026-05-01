@@ -1,4 +1,9 @@
 {
+  "experiment": {
+    "name": "credit_card_isolation_forest",
+    "task_type": "tabular_ad_rca",
+    "tags": ["credit_card", "baseline", "tabular", "isolation_forest"]
+  },
   "dataset": {
     "name": "credit_card",
     "path": "data/raw/creditcard/creditcard.csv",

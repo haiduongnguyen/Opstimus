@@ -32,7 +32,7 @@ pip install -r requirements.txt
 Example with the credit card baseline:
 
 ```bash
-python main.py --config config/credit_card_isolation_forest.json
+python main.py --config config/credit_card/isolation_forest.json
 ```
 
 The pipeline will:
