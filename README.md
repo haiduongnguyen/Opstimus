@@ -91,6 +91,7 @@ The dashboard reads existing outputs in `artifacts/` and shows:
 - global RCA ranking
 - segment-level RCA
 - event-level RCA matches for SMD
+- batch leaderboard comparison across multiple runs
 
 ## Available Example Datasets
 

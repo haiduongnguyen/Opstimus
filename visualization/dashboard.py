@@ -55,6 +55,43 @@ def discover_runs() -> list[dict[str, Any]]:
     return runs
 
 
+def discover_leaderboards() -> list[dict[str, Any]]:
+    leaderboards: list[dict[str, Any]] = []
+    if not ARTIFACTS_DIR.exists():
+        return leaderboards
+
+    for leaderboard_path in ARTIFACTS_DIR.rglob("leaderboard.csv"):
+        try:
+            table = pd.read_csv(leaderboard_path)
+        except Exception:
+            continue
+
+        leaderboard_id = str(leaderboard_path.relative_to(ARTIFACTS_DIR)).replace("\\", "/")
+        leaderboards.append(
+            {
+                "id": leaderboard_id,
+                "path": leaderboard_path,
+                "table": table,
+                "name": leaderboard_id,
+            }
+        )
+
+    leaderboards.sort(key=lambda item: item["id"])
+    return leaderboards
+
+
+def load_leaderboard(leaderboard_id: str | None) -> dict[str, Any] | None:
+    leaderboards = discover_leaderboards()
+    if not leaderboards:
+        return None
+    if leaderboard_id is None:
+        return leaderboards[0]
+    for item in leaderboards:
+        if item["id"] == leaderboard_id:
+            return item
+    return leaderboards[0]
+
+
 def load_run(run_id: str | None) -> dict[str, Any] | None:
     runs = discover_runs()
     if not runs:
@@ -118,6 +155,32 @@ def render_bar_chart(table: pd.DataFrame, x_col: str, y_col: str, title: str, co
     return fig_to_base64(fig)
 
 
+def render_comparison_chart(table: pd.DataFrame, title: str) -> str:
+    numeric_columns = [column for column in ["precision", "recall", "f1", "roc_auc", "pr_auc", "rca_hit_at_5"] if column in table.columns]
+    comparison = table.copy()
+    comparison = comparison[comparison["status"] == "success"].copy()
+    if comparison.empty or not numeric_columns:
+        fig, ax = plt.subplots(figsize=(8, 3))
+        ax.text(0.5, 0.5, "No comparable successful runs", ha="center", va="center")
+        ax.axis("off")
+        return fig_to_base64(fig)
+
+    label_column = "experiment_name" if "experiment_name" in comparison.columns else "config_path"
+    comparison[label_column] = comparison[label_column].fillna(comparison["config_path"])
+    melted = comparison[[label_column, *numeric_columns]].melt(id_vars=label_column, var_name="metric", value_name="value")
+
+    fig, ax = plt.subplots(figsize=(11, 4.2))
+    for metric_name, group in melted.groupby("metric"):
+        ax.plot(group[label_column], group["value"], marker="o", linewidth=1.8, label=metric_name)
+
+    ax.set_title(title)
+    ax.set_ylabel("Value")
+    ax.tick_params(axis="x", rotation=22)
+    ax.grid(alpha=0.25)
+    ax.legend(loc="best", ncol=3, fontsize=9)
+    return fig_to_base64(fig)
+
+
 def metric_cards(summary: dict[str, Any]) -> str:
     metrics = summary.get("metrics", {})
     cards = []
@@ -152,12 +215,44 @@ def dataframe_to_html(frame: pd.DataFrame, max_rows: int = 20) -> str:
     return preview.to_html(index=False, classes="data-table", border=0)
 
 
+def leaderboard_to_html(frame: pd.DataFrame, runs: list[dict[str, Any]], max_rows: int = 30) -> str:
+    if frame.empty:
+        return "<p class='empty-note'>Khong co leaderboard de hien thi.</p>"
+
+    preview = frame.head(max_rows).copy()
+    run_ids = {run["id"] for run in runs}
+
+    if "experiment_name" in preview.columns:
+        preview["open_run"] = ""
+        for index, row in preview.iterrows():
+            config_path = str(row.get("config_path", ""))
+            candidate_run = None
+            if "smd\\machine_1_1\\isolation_forest_percentile_97.json" in config_path:
+                candidate_run = "smd/machine-1-1/isolation_forest_percentile_97"
+            elif "smd\\machine_1_1\\isolation_forest.json" in config_path:
+                candidate_run = "smd/machine-1-1/isolation_forest"
+            elif "sklearn_breast_cancer\\isolation_forest.json" in config_path:
+                candidate_run = "sklearn_breast_cancer/isolation_forest"
+            elif "credit_card\\isolation_forest.json" in config_path:
+                candidate_run = "credit_card/isolation_forest"
+
+            if candidate_run and candidate_run in run_ids:
+                preview.at[index, "open_run"] = f"<a href='/?run={candidate_run}'>Open</a>"
+
+        ordered_columns = ["open_run"] + [column for column in preview.columns if column != "open_run"]
+        preview = preview[ordered_columns]
+
+    return preview.to_html(index=False, classes="data-table", border=0, escape=False)
+
+
 def build_dashboard_html(run: dict[str, Any]) -> str:
     summary = run["summary"]
     predictions = pd.read_csv(run["predictions_path"]) if run["predictions_path"] else pd.DataFrame()
     root_causes = pd.read_csv(run["root_causes_path"]) if run["root_causes_path"] else pd.DataFrame()
     segment_rankings = pd.read_csv(run["segment_path"]) if run["segment_path"] else pd.DataFrame()
     event_matches = pd.read_csv(run["event_match_path"]) if run["event_match_path"] else pd.DataFrame()
+    leaderboard = load_leaderboard(None)
+    leaderboard_table = leaderboard["table"] if leaderboard is not None else pd.DataFrame()
 
     if root_causes.empty:
         rca_block = summary.get("rca")
@@ -169,10 +264,16 @@ def build_dashboard_html(run: dict[str, Any]) -> str:
     score_chart = render_score_chart(predictions, f"Anomaly Score Trend - {run['name']}") if not predictions.empty else ""
     prediction_chart = render_prediction_trend(predictions, f"Prediction vs Ground Truth - {run['name']}") if not predictions.empty else ""
     root_cause_chart = render_bar_chart(root_causes, "feature", "contribution_score", "Top Root Causes", "#d62728") if not root_causes.empty else ""
+    comparison_chart = render_comparison_chart(leaderboard_table, "Leaderboard Comparison") if not leaderboard_table.empty else ""
 
     available_runs = "".join(
         f"<option value='/?run={candidate['id']}' {'selected' if candidate['id'] == run['id'] else ''}>{candidate['id']}</option>"
         for candidate in discover_runs()
+    )
+
+    available_leaderboards = "".join(
+        f"<li><strong>{candidate['id']}</strong> - {len(candidate['table'])} rows</li>"
+        for candidate in discover_leaderboards()
     )
 
     metadata_items = []
@@ -387,6 +488,26 @@ def build_dashboard_html(run: dict[str, Any]) -> str:
                 <h2>Tổng quan chỉ số</h2>
                 <div class="metrics">
                     {metric_cards(summary)}
+                </div>
+            </section>
+
+            <section class="grid">
+                <div class="panel">
+                    <h2>Batch Leaderboards</h2>
+                    <p class="muted">
+                        Dashboard tự động quét mọi file <code>leaderboard.csv</code> trong <code>artifacts/</code> để phục vụ so sánh nhiều lần chạy.
+                    </p>
+                    <ul>
+                        {available_leaderboards or "<li>Chưa có leaderboard nào.</li>"}
+                    </ul>
+                    <div class="footer-note">
+                        Leaderboard mặc định đang hiển thị: <strong>{leaderboard['id'] if leaderboard else 'none'}</strong>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h2>So sánh nhiều run</h2>
+                    <img src="data:image/png;base64,{comparison_chart}" alt="Leaderboard comparison chart" />
+                    {leaderboard_to_html(leaderboard_table, discover_runs(), max_rows=20)}
                 </div>
             </section>
 
