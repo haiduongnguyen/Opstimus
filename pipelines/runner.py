@@ -1,48 +1,19 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
 import joblib
 import pandas as pd
 
-from datasets import CreditCardDataset, SMDDataset
+from config import load_pipeline_config
+from datasets import build_dataset, get_dataset_definition
 from detection.autoencoder import AutoencoderDetector
 from detection.isolation_forest import IsolationForestDetector
 from detection.lof import LocalOutlierFactorDetector
 from evaluation import evaluate_detection, write_report
 from preprocessing.scaling import Scaler
 from rca import analyze_root_causes
-
-
-def _load_config(config_path: str | Path) -> dict[str, Any]:
-    with Path(config_path).open("r", encoding="utf-8") as handle:
-        return json.load(handle)
-
-
-def _build_dataset(config: dict[str, Any]):
-    dataset_config = config["dataset"]
-    dataset_name = dataset_config["name"]
-
-    if dataset_name == "credit_card":
-        return CreditCardDataset(
-            root=dataset_config["path"],
-            label_col=dataset_config.get("label_col", "Class"),
-            drop_columns=dataset_config.get("drop_columns", ["Time"]),
-            test_size=dataset_config.get("test_size", 0.3),
-            random_state=dataset_config.get("random_state", 42),
-        )
-
-    if dataset_name == "smd":
-        return SMDDataset(
-            train_path=dataset_config["train_path"],
-            test_path=dataset_config["test_path"],
-            label_path=dataset_config["label_path"],
-            interpretation_label_path=dataset_config.get("interpretation_label_path"),
-        )
-
-    raise ValueError(f"Unsupported dataset: {dataset_name}")
 
 
 def _build_detector(config: dict[str, Any]):
@@ -62,8 +33,9 @@ def _build_detector(config: dict[str, Any]):
 
 
 def run_pipeline(config_path: str | Path) -> dict[str, Any]:
-    config = _load_config(config_path)
-    dataset = _build_dataset(config).load()
+    config = load_pipeline_config(config_path)
+    dataset_definition = get_dataset_definition(config["dataset"]["name"])
+    dataset = build_dataset(config["dataset"]).load()
     detector = _build_detector(config)
 
     scaler = Scaler()
@@ -77,9 +49,12 @@ def run_pipeline(config_path: str | Path) -> dict[str, Any]:
     summary: dict[str, Any] = {
         "dataset": {
             "name": dataset.name,
+            "dataset_type": dataset_definition["dataset_type"],
             **dataset.metadata,
         },
         "detector": config["detector"],
+        "preprocessing": config["preprocessing"],
+        "threshold": config["threshold"],
     }
 
     if dataset.test_labels is not None:
