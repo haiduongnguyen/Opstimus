@@ -74,6 +74,21 @@ The dashboard reads existing outputs in `artifacts/` and shows:
 - segment-level RCA
 - event-level RCA matches for SMD
 
+## Run Multiple Configs
+
+To execute all JSON configs under `config/` and build a leaderboard:
+
+```bash
+venv_opstimus\Scripts\python.exe run_batch.py --config-root config --output-dir artifacts/batch_runs
+```
+
+Outputs:
+
+- `artifacts/batch_runs/leaderboard.csv`
+- `artifacts/batch_runs/batch_summary.json`
+
+The batch runner is fault-tolerant: one bad or missing dataset config will be marked as failed without stopping the whole batch.
+
 ## Output Artifacts
 
 Each run writes the following files into the configured output directory:
