@@ -45,6 +45,35 @@ The pipeline will:
 6. Rank likely root-cause features for detected anomalies.
 7. Save outputs to `artifacts/...`.
 
+## Run The Demo Dashboard
+
+After generating artifacts, launch the local dashboard:
+
+```bash
+venv_opstimus\Scripts\python.exe visualization\dashboard.py --port 8765
+```
+
+Or on Windows:
+
+```bash
+run_dashboard_demo.bat
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8765
+```
+
+The dashboard reads existing outputs in `artifacts/` and shows:
+
+- detection metrics
+- anomaly score trend
+- prediction vs ground truth
+- global RCA ranking
+- segment-level RCA
+- event-level RCA matches for SMD
+
 ## Output Artifacts
 
 Each run writes the following files into the configured output directory:
