@@ -92,6 +92,15 @@ The dashboard reads existing outputs in `artifacts/` and shows:
 - segment-level RCA
 - event-level RCA matches for SMD
 
+## Available Example Datasets
+
+- `config/credit_card/isolation_forest.json`
+- `config/smd/machine_1_1/isolation_forest.json`
+- `config/smd/machine_1_1/isolation_forest_percentile_97.json`
+- `config/sklearn_breast_cancer/isolation_forest.json`
+
+The `sklearn_breast_cancer` config is self-contained and does not require external raw files, so it is useful for quick smoke tests and demos.
+
 ## Run Multiple Configs
 
 To execute all JSON configs under `config/` and build a leaderboard:
