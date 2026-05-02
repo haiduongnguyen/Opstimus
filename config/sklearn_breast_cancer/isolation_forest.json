@@ -1,7 +1,0 @@
-{
-  "dataset": "sklearn_breast_cancer",
-  "detector": "isolation_forest",
-  "params": {
-    "contamination": 0.35
-  }
-}

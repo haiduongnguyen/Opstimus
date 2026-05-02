@@ -1,157 +1,184 @@
 # Opstimus
 
-Opstimus is a thesis-oriented repository for anomaly detection and lightweight root cause analysis on tabular and multivariate machine data. The current codebase focuses on building a reusable pipeline that can start from one demonstration dataset, then scale toward additional datasets such as credit card fraud and SMD.
+Opstimus is a workflow-based anomaly detection and root cause analysis system for tabular and multivariate time-series datasets. The repo now supports two operating modes from a single JSON config:
 
-## Current Scope
-
-- Modular anomaly detectors: Isolation Forest, LOF, Autoencoder
-- Dataset adapters for credit card and SMD
-- Config-driven pipeline entrypoint
-- Detection metrics and artifact export
-- A baseline RCA module based on feature contribution ranking
+- `train`: benchmark multiple models, run RCA, score the runs, select the best model, and save it for reuse
+- `inference`: run anomaly detection + RCA on data-only input, either from preset models or from a saved best model
 
 ## Repository Layout
 
-- `datasets/`: dataset-specific loaders and adapters
-- `preprocessing/`: shared preprocessing utilities
-- `detection/`: anomaly detection models
-- `evaluation/`: metrics and report writers
-- `rca/`: root cause ranking logic
-- `pipelines/`: end-to-end orchestration
-- `config/`: runnable experiment configurations
-- `experiments/` and `notebooks/`: exploratory and legacy experiment code
+- `main.py`: single entrypoint for all workflows
+- `config/`: workflow configs and templates
+- `workflows/`: workflow config loader, profiles, executors, train/inference orchestration
+- `datasets/`: dataset adapters
+- `detection/`: anomaly detector implementations
+- `thresholding/`: threshold strategies
+- `rca/`: RCA logic and reference profile handling
+- `evaluation/`: metrics and JSON/CSV report writing
+- `visualization/`: local dashboard
 
-## Installation
+## Install
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Run The Pipeline
+## Workflow Model
 
-Example with the credit card baseline:
+### 1. Train Mode
 
-```bash
-python main.py --config config/credit_card/isolation_forest.json
-```
+Use when you have training data or a dataset preset that contains train/test split.
 
-The pipeline will:
+What it does:
 
-1. Load the dataset using a dataset adapter.
-2. Scale train and test features.
-3. Train the configured detector.
-4. Generate anomaly scores and predictions.
-5. Compute detection metrics when labels are available.
-6. Rank likely root-cause features for detected anomalies.
-7. Save outputs to `artifacts/...`.
-
-## Threshold Strategies
-
-The pipeline supports threshold selection through config:
-
-- `model_default`: use detector-native prediction
-- `percentile`: mark points above a chosen anomaly score percentile
-- `stddev`: threshold at `mean + std_factor * std`
-- `value`: use a fixed anomaly score cutoff
+1. Load dataset
+2. Expand a `model_profile` into multiple candidate detectors
+3. Run multiple threshold profiles per detector
+4. Compute detection metrics and RCA
+5. Build `leaderboard.csv`
+6. Select the best run by a configured metric
+7. Copy the best run into `best_model/`
 
 Example:
 
-```json
-"threshold": {
-  "strategy": "percentile",
-  "percentile": 95
-}
+```bash
+venv_opstimus\Scripts\python.exe main.py --config config/train_smd_machine_1_1.json
 ```
 
-## Config Style
+### 2. Inference Mode
 
-The project now supports a short config format. Most runs only need 3 keys:
+Use when you only have input data and want anomaly + RCA output.
+
+Two ways:
+
+- `model_source = "profile"`: run a preset list of unsupervised models on the input data
+- `model_source = "saved_run"`: load a previously selected best model and reuse it
+
+Example:
+
+```bash
+venv_opstimus\Scripts\python.exe main.py --config config/inference_smd_machine_1_1_profile.json
+```
+
+## Config Philosophy
+
+Each workflow uses one JSON file. You declare:
+
+- `mode`
+- `dataset`
+- `benchmark` or `inference`
+- `selection`
+- `rca`
+- `deployment`
+
+### Train Config Example
 
 ```json
 {
-  "dataset": "smd.machine_1_1",
-  "detector": "isolation_forest",
-  "params": {
-    "contamination": 0.05
+  "mode": "train",
+  "workflow": {
+    "name": "train_smd_machine_1_1"
   },
-  "threshold": "percentile:97"
+  "dataset": "smd.machine_1_1",
+  "benchmark": {
+    "model_profile": "time_series_baseline",
+    "threshold_profiles": ["default", "percentile_97"]
+  },
+  "selection": {
+    "metric": "f1",
+    "higher_is_better": true
+  }
 }
 ```
 
-Meaning:
+### Inference Config Example
 
-- `dataset`: choose a preset dataset
-- `detector`: choose a preset detector
-- `params`: override only the detector parameters you care about
-- `threshold`: optional shortcut, for example `percentile:97`, `stddev:3`, or `0.8`
+```json
+{
+  "mode": "inference",
+  "dataset": "csv_data_only",
+  "dataset_overrides": {
+    "data_path": "data/raw/your_data.csv",
+    "label_col": null
+  },
+  "inference": {
+    "model_source": "profile",
+    "model_profile": "tabular_inference_fast",
+    "threshold_profiles": ["default", "percentile_95"]
+  }
+}
+```
 
-Dataset paths, default detector params, task type, tags, and default output directory are resolved from central presets in [config/catalog.py](/D:/thac_si_phenika/master_thesis/Opstimus/config/catalog.py).
+## Presets and Profiles
 
-## Run The Demo Dashboard
+Dataset presets are defined in [workflows/profiles.py](/D:/thac_si_phenika/master_thesis/Opstimus/workflows/profiles.py).
 
-After generating artifacts, launch the local dashboard:
+Current dataset presets:
+
+- `smd.machine_1_1`
+- `sklearn_breast_cancer`
+- `credit_card`
+- `csv_data_only`
+
+Current model profiles:
+
+- `tabular_baseline`
+- `time_series_baseline`
+- `tabular_inference_fast`
+- `time_series_inference_fast`
+
+Current threshold profiles:
+
+- `default`
+- `percentile_95`
+- `percentile_97`
+- `stddev_3`
+
+## Example Configs
+
+- [train_smd_machine_1_1.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/train_smd_machine_1_1.json)
+- [train_sklearn_breast_cancer.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/train_sklearn_breast_cancer.json)
+- [inference_smd_machine_1_1_profile.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/inference_smd_machine_1_1_profile.json)
+- [inference_sklearn_from_saved_best.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/inference_sklearn_from_saved_best.json)
+- [inference_csv_data_only_template.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/inference_csv_data_only_template.json)
+- [inference_from_saved_best_template.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/inference_from_saved_best_template.json)
+
+## Output Structure
+
+Each workflow writes to:
+
+```text
+artifacts/workflows/<workflow_name>/
+```
+
+Typical contents:
+
+- `workflow_summary.json`
+- `leaderboard.csv`
+- `runs/<run_id>/summary.json`
+- `runs/<run_id>/predictions.csv`
+- `runs/<run_id>/root_causes.csv`
+- `runs/<run_id>/reference_profile.json`
+- `best_model/` for train workflows
+
+## Local Dashboard
+
+Start:
 
 ```bash
 venv_opstimus\Scripts\python.exe visualization\dashboard.py --port 8765
 ```
 
-Or on Windows:
+Or:
 
 ```bash
 run_dashboard_demo.bat
 ```
 
-Then open:
+The dashboard scans `artifacts/` and can open workflow runs directly, including new benchmark runs under `artifacts/workflows/...`.
 
-```text
-http://127.0.0.1:8765
-```
+## Notes
 
-The dashboard reads existing outputs in `artifacts/` and shows:
-
-- detection metrics
-- anomaly score trend
-- prediction vs ground truth
-- global RCA ranking
-- segment-level RCA
-- event-level RCA matches for SMD
-- batch leaderboard comparison across multiple runs
-
-## Available Example Datasets
-
-- `config/credit_card/isolation_forest.json`
-- `config/smd/machine_1_1/isolation_forest.json`
-- `config/smd/machine_1_1/isolation_forest_percentile_97.json`
-- `config/sklearn_breast_cancer/isolation_forest.json`
-
-The `sklearn_breast_cancer` config is self-contained and does not require external raw files, so it is useful for quick smoke tests and demos.
-
-## Run Multiple Configs
-
-To execute all JSON configs under `config/` and build a leaderboard:
-
-```bash
-venv_opstimus\Scripts\python.exe run_batch.py --config-root config --output-dir artifacts/batch_runs
-```
-
-Outputs:
-
-- `artifacts/batch_runs/leaderboard.csv`
-- `artifacts/batch_runs/batch_summary.json`
-
-The batch runner is fault-tolerant: one bad or missing dataset config will be marked as failed without stopping the whole batch.
-
-## Output Artifacts
-
-Each run writes the following files into the configured output directory:
-
-- `summary.json`: dataset metadata, detector config, metrics, and RCA summary
-- `predictions.csv`: anomaly scores, predictions, and labels if available
-- `root_causes.csv`: ranked contributing features
-- serialized model and scaler files
-
-## Notes For Thesis Development
-
-- The current RCA implementation is a baseline feature-ranking approach, not yet a full causal RCA method.
-- Notebook experiments are still available, but the new recommended execution path is the config-driven pipeline.
-- The next natural step is to add stronger RCA methods and time-series event-level evaluation.
+- RCA is still a contribution-based baseline, not causal RCA.
+- `train` mode is the right path for a new dataset when you do not know which detector is best.
+- `inference` mode is the right path for data-only analysis or for reusing a selected best model.

@@ -11,7 +11,7 @@ import pandas as pd
 @dataclass
 class DatasetBundle:
     name: str
-    train_features: pd.DataFrame
+    train_features: Optional[pd.DataFrame]
     test_features: pd.DataFrame
     test_labels: Optional[pd.Series]
     metadata: dict

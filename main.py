@@ -3,22 +3,22 @@ from __future__ import annotations
 import argparse
 import json
 
-from pipelines import run_pipeline
+from workflows import run_workflow
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run anomaly detection and RCA pipeline")
+    parser = argparse.ArgumentParser(description="Run anomaly detection and RCA workflow")
     parser.add_argument(
         "--config",
         required=True,
-        help="Path to a JSON config file",
+        help="Path to a workflow JSON config file",
     )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    summary = run_pipeline(args.config)
+    summary = run_workflow(args.config)
     print(json.dumps(summary, indent=2))
 
 

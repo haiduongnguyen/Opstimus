@@ -1,0 +1,20 @@
+{
+  "mode": "train",
+  "workflow": {
+    "name": "train_sklearn_breast_cancer",
+    "tags": ["benchmark", "tabular"]
+  },
+  "dataset": "sklearn_breast_cancer",
+  "benchmark": {
+    "model_profile": "tabular_baseline",
+    "threshold_profiles": ["default", "percentile_95"]
+  },
+  "selection": {
+    "metric": "f1",
+    "higher_is_better": true
+  },
+  "rca": {
+    "enabled": true,
+    "top_k": 5
+  }
+}

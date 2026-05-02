@@ -1,0 +1,23 @@
+{
+  "mode": "inference",
+  "workflow": {
+    "name": "inference_from_saved_best_template",
+    "tags": ["template", "saved_model"]
+  },
+  "dataset": "csv_data_only",
+  "dataset_overrides": {
+    "data_path": "data/raw/your_data.csv",
+    "label_col": null,
+    "drop_columns": []
+  },
+  "inference": {
+    "model_source": "saved_run",
+    "saved_run_dir": "artifacts/workflows/train_smd_machine_1_1/best_model",
+    "threshold_profiles": ["default"],
+    "use_test_only": true
+  },
+  "rca": {
+    "enabled": true,
+    "top_k": 5
+  }
+}

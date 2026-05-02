@@ -1,8 +1,0 @@
-{
-  "dataset": "smd.machine_1_1",
-  "detector": "isolation_forest",
-  "params": {
-    "contamination": 0.05
-  },
-  "threshold": "percentile:97"
-}

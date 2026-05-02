@@ -14,6 +14,18 @@ class InterpretationEvent:
     channels: list[str]
 
 
+def build_reference_profile(train_features: pd.DataFrame) -> dict[str, dict[str, float]]:
+    train_mean = train_features.mean(axis=0)
+    train_std = train_features.std(axis=0)
+    non_zero_std = train_std[train_std > 0]
+    robust_floor = max(float(non_zero_std.quantile(0.1)) if not non_zero_std.empty else 0.0, 1e-3)
+    stabilized_std = train_std.clip(lower=robust_floor)
+    return {
+        "mean": {column: float(value) for column, value in train_mean.items()},
+        "std": {column: float(value) for column, value in stabilized_std.items()},
+    }
+
+
 def _mask_to_segments(anomaly_mask) -> list[tuple[int, int]]:
     mask = pd.Series(anomaly_mask).astype(bool).reset_index(drop=True)
     segments: list[tuple[int, int]] = []
@@ -54,12 +66,18 @@ def _parse_interpretation_labels(path: str | Path | None) -> list[Interpretation
     return events
 
 
-def _compute_contribution_matrix(train_features: pd.DataFrame, test_features: pd.DataFrame) -> pd.DataFrame:
-    train_mean = train_features.mean(axis=0)
-    train_std = train_features.std(axis=0)
-    non_zero_std = train_std[train_std > 0]
-    robust_floor = max(float(non_zero_std.quantile(0.1)) if not non_zero_std.empty else 0.0, 1e-3)
-    stabilized_std = train_std.clip(lower=robust_floor)
+def _compute_contribution_matrix(
+    train_features: pd.DataFrame | None,
+    test_features: pd.DataFrame,
+    reference_profile: dict[str, dict[str, float]] | None = None,
+) -> pd.DataFrame:
+    if reference_profile is None:
+        if train_features is None:
+            raise ValueError("train_features or reference_profile is required for RCA")
+        reference_profile = build_reference_profile(train_features)
+
+    train_mean = pd.Series(reference_profile["mean"]).reindex(test_features.columns)
+    stabilized_std = pd.Series(reference_profile["std"]).reindex(test_features.columns).fillna(1.0).clip(lower=1e-3)
     return (test_features - train_mean).abs().divide(stabilized_std, axis=1)
 
 
@@ -79,11 +97,12 @@ def rank_root_causes(
 
 
 def analyze_root_causes(
-    train_features: pd.DataFrame,
+    train_features: pd.DataFrame | None,
     test_features: pd.DataFrame,
     anomaly_mask,
     top_k: int = 5,
     interpretation_label_path: str | Path | None = None,
+    reference_profile: dict[str, dict[str, float]] | None = None,
 ) -> dict[str, Any]:
     anomaly_mask = pd.Series(anomaly_mask).astype(bool).reset_index(drop=True)
 
@@ -98,7 +117,10 @@ def analyze_root_causes(
             "rca_metrics": {},
         }
 
-    contribution_matrix = _compute_contribution_matrix(train_features, test_features)
+    if reference_profile is None and train_features is None:
+        raise ValueError("train_features or reference_profile is required for RCA")
+
+    contribution_matrix = _compute_contribution_matrix(train_features, test_features, reference_profile=reference_profile)
     anomaly_contribution = contribution_matrix.loc[anomaly_mask]
     global_scores = anomaly_contribution.mean(axis=0).sort_values(ascending=False)
 

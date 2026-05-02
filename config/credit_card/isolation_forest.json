@@ -1,7 +1,0 @@
-{
-  "dataset": "credit_card",
-  "detector": "isolation_forest",
-  "params": {
-    "contamination": 0.01
-  }
-}

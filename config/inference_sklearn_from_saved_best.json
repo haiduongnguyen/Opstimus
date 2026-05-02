@@ -1,0 +1,18 @@
+{
+  "mode": "inference",
+  "workflow": {
+    "name": "inference_sklearn_from_saved_best",
+    "tags": ["saved_model", "tabular"]
+  },
+  "dataset": "sklearn_breast_cancer",
+  "inference": {
+    "model_source": "saved_run",
+    "saved_run_dir": "artifacts/workflows/train_sklearn_breast_cancer/best_model",
+    "threshold_profiles": ["default"],
+    "use_test_only": true
+  },
+  "rca": {
+    "enabled": true,
+    "top_k": 5
+  }
+}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from datasets.csv_data_only import CSVDataOnlyDataset
 from datasets.credit_card import CreditCardDataset
 from datasets.sklearn_breast_cancer import SklearnBreastCancerDataset
 from datasets.smd import SMDDataset
@@ -19,6 +20,10 @@ DATASET_REGISTRY: dict[str, dict[str, Any]] = {
     "sklearn_breast_cancer": {
         "dataset_type": "tabular",
         "builder": SklearnBreastCancerDataset,
+    },
+    "csv_data_only": {
+        "dataset_type": "tabular",
+        "builder": CSVDataOnlyDataset,
     },
 }
 
@@ -58,6 +63,13 @@ def build_dataset(dataset_config: dict[str, Any]):
             normal_only_train=dataset_config.get("normal_only_train", True),
             test_size=dataset_config.get("test_size", 0.3),
             random_state=dataset_config.get("random_state", 42),
+        )
+
+    if dataset_name == "csv_data_only":
+        return builder(
+            root=dataset_config["data_path"],
+            label_col=dataset_config.get("label_col"),
+            drop_columns=dataset_config.get("drop_columns", []),
         )
 
     raise ValueError(f"Dataset builder not implemented for: {dataset_name}")

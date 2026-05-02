@@ -222,19 +222,30 @@ def leaderboard_to_html(frame: pd.DataFrame, runs: list[dict[str, Any]], max_row
     preview = frame.head(max_rows).copy()
     run_ids = {run["id"] for run in runs}
 
-    if "experiment_name" in preview.columns:
+    if "run_id" in preview.columns or "experiment_name" in preview.columns:
         preview["open_run"] = ""
         for index, row in preview.iterrows():
-            config_path = str(row.get("config_path", ""))
             candidate_run = None
-            if "smd\\machine_1_1\\isolation_forest_percentile_97.json" in config_path:
-                candidate_run = "smd/machine-1-1/isolation_forest_percentile_97"
-            elif "smd\\machine_1_1\\isolation_forest.json" in config_path:
-                candidate_run = "smd/machine-1-1/isolation_forest"
-            elif "sklearn_breast_cancer\\isolation_forest.json" in config_path:
-                candidate_run = "sklearn_breast_cancer/isolation_forest"
-            elif "credit_card\\isolation_forest.json" in config_path:
-                candidate_run = "credit_card/isolation_forest"
+            run_dir = row.get("run_dir")
+            if isinstance(run_dir, str) and run_dir:
+                run_path = Path(run_dir)
+                try:
+                    candidate_run = run_path.relative_to(ARTIFACTS_DIR).as_posix()
+                except ValueError:
+                    if run_path.parts and "artifacts" in run_path.parts:
+                        artifacts_index = run_path.parts.index("artifacts")
+                        candidate_run = Path(*run_path.parts[artifacts_index + 1 :]).as_posix()
+
+            if candidate_run is None:
+                config_path = str(row.get("config_path", ""))
+                if "smd\\machine_1_1\\isolation_forest_percentile_97.json" in config_path:
+                    candidate_run = "smd/machine-1-1/isolation_forest_percentile_97"
+                elif "smd\\machine_1_1\\isolation_forest.json" in config_path:
+                    candidate_run = "smd/machine-1-1/isolation_forest"
+                elif "sklearn_breast_cancer\\isolation_forest.json" in config_path:
+                    candidate_run = "sklearn_breast_cancer/isolation_forest"
+                elif "credit_card\\isolation_forest.json" in config_path:
+                    candidate_run = "credit_card/isolation_forest"
 
             if candidate_run and candidate_run in run_ids:
                 preview.at[index, "open_run"] = f"<a href='/?run={candidate_run}'>Open</a>"
