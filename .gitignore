@@ -17,6 +17,7 @@ raw/creditcard.csv
 
 data/raw/SMD_data/
 data/raw/SMD_data.zip
+data/raw/SKAB/
 data/raw/creditcard/
 data/raw/SMD_data_use/
 models/checkpoint/

@@ -116,6 +116,7 @@ Dataset presets are defined in [workflows/profiles.py](/D:/thac_si_phenika/maste
 Current dataset presets:
 
 - `smd.machine_1_1`
+- `skab.other_1`
 - `sklearn_breast_cancer`
 - `credit_card`
 - `csv_data_only`
@@ -137,8 +138,10 @@ Current threshold profiles:
 ## Example Configs
 
 - [train_smd_machine_1_1.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/train_smd_machine_1_1.json)
+- [train_skab_other_1.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/train_skab_other_1.json)
 - [train_sklearn_breast_cancer.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/train_sklearn_breast_cancer.json)
 - [inference_smd_machine_1_1_profile.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/inference_smd_machine_1_1_profile.json)
+- [inference_skab_other_1_profile.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/inference_skab_other_1_profile.json)
 - [inference_sklearn_from_saved_best.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/inference_sklearn_from_saved_best.json)
 - [inference_csv_data_only_template.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/inference_csv_data_only_template.json)
 - [inference_from_saved_best_template.json](/D:/thac_si_phenika/master_thesis/Opstimus/config/inference_from_saved_best_template.json)
@@ -182,3 +185,4 @@ The dashboard scans `artifacts/` and can open workflow runs directly, including 
 - RCA is still a contribution-based baseline, not causal RCA.
 - `train` mode is the right path for a new dataset when you do not know which detector is best.
 - `inference` mode is the right path for data-only analysis or for reusing a selected best model.
+- SKAB raw files are expected under `data/raw/SKAB/` and are ignored from Git history.

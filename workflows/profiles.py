@@ -45,6 +45,21 @@ DATASET_PRESETS: dict[str, dict[str, Any]] = {
         "default_train_profile": "tabular_baseline",
         "default_inference_profile": "tabular_inference_fast",
     },
+    "skab.other_1": {
+        "dataset": {
+            "name": "skab",
+            "train_path": "data/raw/SKAB/data/anomaly-free/anomaly-free.csv",
+            "test_path": "data/raw/SKAB/data/other/1.csv",
+            "label_col": "anomaly",
+            "changepoint_col": "changepoint",
+            "timestamp_col": "datetime",
+            "csv_separator": ";",
+        },
+        "dataset_type": "time_series",
+        "tags": ["skab", "other_1", "time_series"],
+        "default_train_profile": "time_series_baseline",
+        "default_inference_profile": "time_series_inference_fast",
+    },
     "csv_data_only": {
         "dataset": {
             "name": "csv_data_only",

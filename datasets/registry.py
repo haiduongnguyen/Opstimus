@@ -4,6 +4,7 @@ from typing import Any
 
 from datasets.csv_data_only import CSVDataOnlyDataset
 from datasets.credit_card import CreditCardDataset
+from datasets.skab import SKABDataset
 from datasets.sklearn_breast_cancer import SklearnBreastCancerDataset
 from datasets.smd import SMDDataset
 
@@ -16,6 +17,10 @@ DATASET_REGISTRY: dict[str, dict[str, Any]] = {
     "smd": {
         "dataset_type": "time_series",
         "builder": SMDDataset,
+    },
+    "skab": {
+        "dataset_type": "time_series",
+        "builder": SKABDataset,
     },
     "sklearn_breast_cancer": {
         "dataset_type": "tabular",
@@ -54,6 +59,16 @@ def build_dataset(dataset_config: dict[str, Any]):
             test_path=dataset_config["test_path"],
             label_path=dataset_config["label_path"],
             interpretation_label_path=dataset_config.get("interpretation_label_path"),
+        )
+
+    if dataset_name == "skab":
+        return builder(
+            train_path=dataset_config["train_path"],
+            test_path=dataset_config["test_path"],
+            label_col=dataset_config.get("label_col", "anomaly"),
+            changepoint_col=dataset_config.get("changepoint_col", "changepoint"),
+            timestamp_col=dataset_config.get("timestamp_col", "datetime"),
+            csv_separator=dataset_config.get("csv_separator", ";"),
         )
 
     if dataset_name == "sklearn_breast_cancer":

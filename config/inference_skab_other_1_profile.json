@@ -1,0 +1,18 @@
+{
+  "mode": "inference",
+  "workflow": {
+    "name": "inference_skab_other_1_profile",
+    "tags": ["skab", "data_only"]
+  },
+  "dataset": "skab.other_1",
+  "inference": {
+    "model_source": "profile",
+    "model_profile": "time_series_inference_fast",
+    "threshold_profiles": ["default", "percentile_97"],
+    "use_test_only": true
+  },
+  "rca": {
+    "enabled": true,
+    "top_k": 5
+  }
+}

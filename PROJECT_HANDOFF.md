@@ -99,6 +99,7 @@ venv_opstimus\Scripts\python.exe main.py --config config/train_smd_machine_1_1.j
 ### Dataset Presets
 
 - `smd.machine_1_1`
+- `skab.other_1`
 - `sklearn_breast_cancer`
 - `credit_card`
 - `csv_data_only`
@@ -173,6 +174,8 @@ Successful:
 - `main.py --config config/train_sklearn_breast_cancer.json`
 - `main.py --config config/inference_smd_machine_1_1_profile.json`
 - `main.py --config config/inference_sklearn_from_saved_best.json`
+- `main.py --config config/train_skab_other_1.json`
+- `main.py --config config/inference_skab_other_1_profile.json`
 
 Observed behavior:
 
@@ -184,6 +187,7 @@ Observed behavior:
 
 - RCA is still contribution-based, not causal.
 - `credit_card` preset still depends on local raw file `data/raw/creditcard/creditcard.csv`.
+- `skab.other_1` uses `data/raw/SKAB/data/anomaly-free/anomaly-free.csv` as train and `data/raw/SKAB/data/other/1.csv` as test.
 - For a new dataset, the right path is:
   1. add or map dataset
   2. run `train` workflow with a profile

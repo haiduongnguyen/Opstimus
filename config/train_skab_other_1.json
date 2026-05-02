@@ -1,0 +1,20 @@
+{
+  "mode": "train",
+  "workflow": {
+    "name": "train_skab_other_1",
+    "tags": ["benchmark", "skab"]
+  },
+  "dataset": "skab.other_1",
+  "benchmark": {
+    "model_profile": "time_series_baseline",
+    "threshold_profiles": ["default", "percentile_95", "percentile_97"]
+  },
+  "selection": {
+    "metric": "f1",
+    "higher_is_better": true
+  },
+  "rca": {
+    "enabled": true,
+    "top_k": 5
+  }
+}
