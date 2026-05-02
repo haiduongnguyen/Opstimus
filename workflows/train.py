@@ -13,6 +13,15 @@ from workflows.executor import execute_detector_run
 from workflows.profiles import MODEL_PROFILES, THRESHOLD_PROFILES
 
 
+def _derive_dashboard_run_id(run_output_dir: str | Path) -> str | None:
+    run_path = Path(run_output_dir)
+    parts = run_path.parts
+    if "artifacts" in parts:
+        artifacts_index = parts.index("artifacts")
+        return Path(*parts[artifacts_index + 1 :]).as_posix()
+    return None
+
+
 def _resolve_model_specs(config: dict[str, Any]) -> list[dict[str, Any]]:
     explicit_models = config["benchmark"].get("models", [])
     if explicit_models:
@@ -143,7 +152,11 @@ def run_train_workflow(config: dict[str, Any]) -> dict[str, Any]:
         "best_run_dir": best_run["output_dir"] if best_run is not None else None,
         "best_metric": selection_metric,
         "best_metric_value": best_score,
-        "dashboard_hint": f"http://127.0.0.1:8765/?run={Path(best_run['output_dir']).relative_to('artifacts').as_posix()}" if best_run is not None else None,
+        "dashboard_hint": (
+            f"http://127.0.0.1:8765/?run={_derive_dashboard_run_id(best_run['output_dir'])}"
+            if best_run is not None and _derive_dashboard_run_id(best_run["output_dir"])
+            else None
+        ),
     }
 
     with (workflow_dir / "workflow_summary.json").open("w", encoding="utf-8") as handle:

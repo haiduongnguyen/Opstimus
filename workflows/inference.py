@@ -12,6 +12,15 @@ from workflows.executor import execute_detector_run, execute_saved_model_run
 from workflows.profiles import MODEL_PROFILES, THRESHOLD_PROFILES
 
 
+def _derive_dashboard_run_id(run_output_dir: str | Path) -> str | None:
+    run_path = Path(run_output_dir)
+    parts = run_path.parts
+    if "artifacts" in parts:
+        artifacts_index = parts.index("artifacts")
+        return Path(*parts[artifacts_index + 1 :]).as_posix()
+    return None
+
+
 def _resolve_inference_models(config: dict[str, Any]) -> list[dict[str, Any]]:
     explicit_models = config["inference"].get("models", [])
     if explicit_models:
@@ -117,7 +126,11 @@ def run_inference_workflow(config: dict[str, Any]) -> dict[str, Any]:
         "num_success": int((leaderboard["status"] == "success").sum()) if not leaderboard.empty else 0,
         "num_failed": int((leaderboard["status"] == "failed").sum()) if not leaderboard.empty else 0,
         "recommended_run_id": recommended_run_id,
-        "dashboard_hint": f"http://127.0.0.1:8765/?run=workflows/{config['workflow']['name']}/runs/{recommended_run_id}" if recommended_run_id else None,
+        "dashboard_hint": (
+            f"http://127.0.0.1:8765/?run={_derive_dashboard_run_id(runs_dir / recommended_run_id)}"
+            if recommended_run_id and _derive_dashboard_run_id(runs_dir / recommended_run_id)
+            else None
+        ),
     }
 
     with (workflow_dir / "workflow_summary.json").open("w", encoding="utf-8") as handle:
