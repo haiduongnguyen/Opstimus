@@ -63,6 +63,30 @@ Example:
 }
 ```
 
+## Config Style
+
+The project now supports a short config format. Most runs only need 3 keys:
+
+```json
+{
+  "dataset": "smd.machine_1_1",
+  "detector": "isolation_forest",
+  "params": {
+    "contamination": 0.05
+  },
+  "threshold": "percentile:97"
+}
+```
+
+Meaning:
+
+- `dataset`: choose a preset dataset
+- `detector`: choose a preset detector
+- `params`: override only the detector parameters you care about
+- `threshold`: optional shortcut, for example `percentile:97`, `stddev:3`, or `0.8`
+
+Dataset paths, default detector params, task type, tags, and default output directory are resolved from central presets in [config/catalog.py](/D:/thac_si_phenika/master_thesis/Opstimus/config/catalog.py).
+
 ## Run The Demo Dashboard
 
 After generating artifacts, launch the local dashboard:
